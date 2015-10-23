@@ -5,24 +5,17 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -36,131 +29,38 @@ import java.net.URISyntaxException;
  * Created by lk on 2015. 10. 23..
  */
 public class ChattingService extends Service {
+
+    /**
+     * For ChatHead
+     */
     private ImageView mImageView;
-    private EditText mEditText;
     private TextView mTextView;
     private WindowManager.LayoutParams mParams;
-    private WindowManager.LayoutParams mParams2;
     private WindowManager mWindowManager;
-    private InputMethodManager mInputMethodManager;
     private SeekBar mSeekBar;
 
-    /*
+    /**
      * For Floating Button
      */
-    private float START_X, START_Y;
+    private float start_X, start_Y;
     private int PREV_X, PREV_Y;
-    private int MAX_X = -1, MAX_Y = -1;
+    private int max_X = -1, max_Y = -1;
     private boolean hasLongPress;
     private LongPressClass LongPressFunction;
     private Handler mHandler = null;
-
-
-    private View.OnTouchListener mViewTouchListener = new View.OnTouchListener() {
-        @Override public boolean onTouch(View v, MotionEvent event) {
-
-            Log.i("touch Event", event.getAction()+"");
-            switch(event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if(MAX_X == -1)
-                        setMaxPosition();
-                    START_X = event.getRawX();
-                    START_Y = event.getRawY();
-                    PREV_X = mParams.x;
-                    PREV_Y = mParams.y;
-
-                    hasLongPress = false;
-                    CheckLongClick();
-
-                    break;
-                case MotionEvent.ACTION_MOVE:
-
-                    if(hasLongPress) {
-                        int x = (int) (event.getRawX() - START_X);
-                        int y = (int) (event.getRawY() - START_Y);
-
-                        mParams.x = PREV_X + x;
-                        mParams.y = PREV_Y + y;
-
-                        optimizePosition();
-                        mWindowManager.updateViewLayout(mImageView, mParams);
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    if(!hasLongPress){
-                        removeLongClickCallback();
-                        shortClickEvent();
-                    }
-                    break;
-            }
-
-            return true;
-        }
-    };
-
-    private void shortClickEvent() {
-        mParams.x = 150;
-        mParams.y = 150;
-        mWindowManager.updateViewLayout(mImageView, mParams);
-
-    }
-
-    private void removeLongClickCallback() {
-        if(LongPressFunction != null)
-            mHandler.removeCallbacks(LongPressFunction);
-    }
-
-    private void CheckLongClick() {
-        hasLongPress = false;
-        if(LongPressFunction == null)
-            LongPressFunction = new LongPressClass();
-
-        mHandler.postDelayed(LongPressFunction, 100);
-    }
+    private final int DEFULT_START_X = 100;
+    private final int DEFULT_START_Y = 100;
 
     @Override
-    public IBinder onBind(Intent arg0) { return null; }
-
-    private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel)
-    {
-        Bitmap srcBitmap = BitmapFactory.decodeResource(getResources(), _srcResId);
-        srcBitmap = Bitmap.createScaledBitmap(srcBitmap, 180, 180, true);
-
-        RoundedBitmapDrawable roundedDrawable =
-                RoundedBitmapDrawableFactory.create(getResources(), srcBitmap);
-
-        roundedDrawable.setCornerRadius( _roundInPixel );
-        roundedDrawable.setAntiAlias(true);
-
-        return roundedDrawable.getBitmap();
+    public IBinder onBind(Intent arg0) {
+        return null;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mImageView = new ImageView(this);
-        mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
-        mImageView.setOnTouchListener(mViewTouchListener);
-
-//        mEditText = new EditText(this);
-//        mEditText.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                Log.i("Edit Touch", event.getAction() + "");
-//
-//                mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_FORCED);
-//                return true;
-//            }
-//        });
-
-        mTextView = new TextView(this);
-        mTextView.setText("가나다라");
-
-
-
-        mInputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_IMPLICIT);
+        initView();
 
         mHandler = new Handler();
 
@@ -174,10 +74,10 @@ public class ChattingService extends Service {
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mImageView, mParams);
-        mWindowManager.addView(mTextView,mParams);
+        mWindowManager.addView(mTextView, mParams);
 
         try {
-            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.29:8080/eventbus", "BroadcastNewsfeed"){
+            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.29:8080/eventbus", "BroadcastNewsfeed") {
                 @Override
                 void parseSockJS(String s) {
                     try {
@@ -189,7 +89,7 @@ public class ChattingService extends Service {
                         String address = json.getString("address");
                         final String body = json.getString("body");
 
-                        if("to.client.BroadcastNewsfeed".equals(address))
+                        if ("to.client.BroadcastNewsfeed".equals(address))
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -222,24 +122,40 @@ public class ChattingService extends Service {
 //
 //        mWindowManager.addView(mEditText, mParams2);
 
-
-        //shortClickEvent();  //todo remove
         //addOpacityController();
     }
 
-    private void setMaxPosition() {
-        DisplayMetrics matrix = new DisplayMetrics();
-        mWindowManager.getDefaultDisplay().getMetrics(matrix);
+    private void initView() {
+        mImageView = new ImageView(this);
+        mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+        mImageView.setOnTouchListener(mViewTouchListener);
 
-        MAX_X = matrix.widthPixels - mImageView.getWidth();
-        MAX_Y = matrix.heightPixels - mImageView.getHeight();
+//        mEditText = new EditText(this);
+//        mEditText.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                Log.i("Edit Touch", event.getAction() + "");
+//
+//                mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_FORCED);
+//                return true;
+//            }
+//        });
+
+        mTextView = new TextView(this);
+        mTextView.setText("가나다라");
     }
 
-    private void optimizePosition() {
-        if(mParams.x > MAX_X) mParams.x = MAX_X;
-        if(mParams.y > MAX_Y) mParams.y = MAX_Y;
-        if(mParams.x < 0) mParams.x = 0;
-        if(mParams.y < 0) mParams.y = 0;
+    private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel) {
+        Bitmap srcBitmap = BitmapFactory.decodeResource(getResources(), _srcResId);
+        srcBitmap = Bitmap.createScaledBitmap(srcBitmap, 180, 180, true);
+
+        RoundedBitmapDrawable roundedDrawable =
+                RoundedBitmapDrawableFactory.create(getResources(), srcBitmap);
+
+        roundedDrawable.setCornerRadius(_roundInPixel);
+        roundedDrawable.setAntiAlias(true);
+
+        return roundedDrawable.getBitmap();
     }
 
     private void addOpacityController() {
@@ -247,10 +163,16 @@ public class ChattingService extends Service {
         mSeekBar.setMax(100);
         mSeekBar.setProgress(100);
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
 
-            @Override public void onProgressChanged(SeekBar seekBar, int progress,	boolean fromUser) {
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mParams.alpha = progress / 100.0f;
                 mWindowManager.updateViewLayout(mImageView, mParams);
             }
@@ -268,36 +190,108 @@ public class ChattingService extends Service {
         mWindowManager.addView(mSeekBar, params);
     }
 
+    private void runOnUiThread(Runnable runnable) { mHandler.post(runnable); }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         setMaxPosition();
         optimizePosition();
     }
 
+    private void setMaxPosition() {
+        DisplayMetrics matrix = new DisplayMetrics();
+        mWindowManager.getDefaultDisplay().getMetrics(matrix);
+
+        max_X = matrix.widthPixels - mImageView.getWidth();
+        max_Y = matrix.heightPixels - mImageView.getHeight();
+    }
+
+    private void optimizePosition() {
+        if (mParams.x > max_X) mParams.x = max_X;
+        if (mParams.y > max_Y) mParams.y = max_Y;
+        if (mParams.x < 0) mParams.x = 0;
+        if (mParams.y < 0) mParams.y = 0;
+    }
+
     @Override
     public void onDestroy() {
-        if(mWindowManager != null) {
-            if(mImageView != null) mWindowManager.removeView(mImageView);
-            if(mSeekBar != null) mWindowManager.removeView(mSeekBar);
+        if (mWindowManager != null) {
+            if (mImageView != null) mWindowManager.removeView(mImageView);
+            if (mSeekBar != null) mWindowManager.removeView(mSeekBar);
         }
         super.onDestroy();
     }
 
-    private class LongPressClass implements Runnable{
 
+    private View.OnTouchListener mViewTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+
+            Log.i("touch Event", event.getAction() + "");
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (max_X == -1)
+                        setMaxPosition();
+                    start_X = event.getRawX();
+                    start_Y = event.getRawY();
+                    PREV_X = mParams.x;
+                    PREV_Y = mParams.y;
+
+                    hasLongPress = false;
+                    CheckLongClick();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+
+                    if (hasLongPress) {
+                        int x = (int) (event.getRawX() - start_X);
+                        int y = (int) (event.getRawY() - start_Y);
+
+                        mParams.x = PREV_X + x;
+                        mParams.y = PREV_Y + y;
+
+                        optimizePosition();
+                        mWindowManager.updateViewLayout(mImageView, mParams);
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (!hasLongPress) {
+                        removeLongClickCallback();
+                        shortClickEvent();
+                    }
+                    break;
+            }
+            return true;
+        }
+    };
+
+
+    private void removeLongClickCallback() {
+        if (LongPressFunction != null)
+            mHandler.removeCallbacks(LongPressFunction);
+    }
+
+    private void CheckLongClick() {
+        hasLongPress = false;
+        if (LongPressFunction == null)
+            LongPressFunction = new LongPressClass();
+
+        mHandler.postDelayed(LongPressFunction, 100);
+    }
+
+
+    private void shortClickEvent() {
+        mParams.x = DEFULT_START_X;
+        mParams.y = DEFULT_START_Y;
+        mWindowManager.updateViewLayout(mImageView, mParams);
+    }
+
+    private class LongPressClass implements Runnable {
         @Override
         public void run() {
-            if(LongClickEvent())
+            if (LongClickEvent())
                 hasLongPress = true;
         }
     }
 
-    private boolean LongClickEvent(){
-        Log.i("Event", "Long");
-        return true;
-    }
-
-    private void runOnUiThread(Runnable runnable) {
-        mHandler.post(runnable);
-    }
+    private boolean LongClickEvent() { return true; }
 }
