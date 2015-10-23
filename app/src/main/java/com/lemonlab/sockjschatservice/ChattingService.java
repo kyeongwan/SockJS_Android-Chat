@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -20,17 +21,28 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URISyntaxException;
 
 /**
  * Created by lk on 2015. 10. 23..
  */
 public class ChattingService extends Service {
     private ImageView mImageView;
+    private EditText mEditText;
+    private TextView mTextView;
     private WindowManager.LayoutParams mParams;
+    private WindowManager.LayoutParams mParams2;
     private WindowManager mWindowManager;
+    private InputMethodManager mInputMethodManager;
     private SeekBar mSeekBar;
 
     /*
@@ -87,9 +99,10 @@ public class ChattingService extends Service {
     };
 
     private void shortClickEvent() {
-        mParams.x = 50;
-        mParams.y = 50;
+        mParams.x = 150;
+        mParams.y = 150;
         mWindowManager.updateViewLayout(mImageView, mParams);
+
     }
 
     private void removeLongClickCallback() {
@@ -127,9 +140,28 @@ public class ChattingService extends Service {
         super.onCreate();
 
         mImageView = new ImageView(this);
-
         mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
         mImageView.setOnTouchListener(mViewTouchListener);
+
+//        mEditText = new EditText(this);
+//        mEditText.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                Log.i("Edit Touch", event.getAction() + "");
+//
+//                mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_FORCED);
+//                return true;
+//            }
+//        });
+
+        mTextView = new TextView(this);
+        mTextView.setText("가나다라");
+
+
+
+        mInputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_IMPLICIT);
+
         mHandler = new Handler();
 
         mParams = new WindowManager.LayoutParams(
@@ -142,8 +174,57 @@ public class ChattingService extends Service {
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mImageView, mParams);
+        mWindowManager.addView(mTextView,mParams);
 
-        addOpacityController();
+        try {
+            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.29:8080/eventbus", "BroadcastNewsfeed"){
+                @Override
+                void parseSockJS(String s) {
+                    try {
+                        s = s.replace("\\\"", "\"");
+                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
+
+                        JSONObject json = new JSONObject(s);
+                        String type = json.getString("type");
+                        String address = json.getString("address");
+                        final String body = json.getString("body");
+
+                        if("to.client.BroadcastNewsfeed".equals(address))
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mTextView.setText(body);
+                                }
+                            });
+
+                        System.out.println(body);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            boolean b = sockJS.connectBlocking();
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+//        mParams2 = new WindowManager.LayoutParams(
+//                300,
+//                300,
+//                WindowManager.LayoutParams.TYPE_PHONE,
+//                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+//                PixelFormat.TRANSLUCENT);
+//        mParams2.gravity = Gravity.LEFT | Gravity.TOP;
+//
+//        mWindowManager.addView(mEditText, mParams2);
+
+
+        //shortClickEvent();  //todo remove
+        //addOpacityController();
     }
 
     private void setMaxPosition() {
@@ -214,5 +295,9 @@ public class ChattingService extends Service {
     private boolean LongClickEvent(){
         Log.i("Event", "Long");
         return true;
+    }
+
+    private void runOnUiThread(Runnable runnable) {
+        mHandler.post(runnable);
     }
 }
