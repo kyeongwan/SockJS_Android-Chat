@@ -2,12 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lemonlab.sockjschatservice" >
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
+        <service android:name="com.lemonlab.sockjschatservice.ChattingService" android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
