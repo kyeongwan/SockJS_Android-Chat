@@ -58,7 +58,7 @@ public class ChattingService extends Service {
                     PREV_Y = mParams.y;
 
                     hasLongPress = false;
-                    CheckLongClick(0);
+                    CheckLongClick();
 
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -97,12 +97,12 @@ public class ChattingService extends Service {
             mHandler.removeCallbacks(LongPressFunction);
     }
 
-    private void CheckLongClick(int i) {
+    private void CheckLongClick() {
         hasLongPress = false;
         if(LongPressFunction == null)
             LongPressFunction = new LongPressClass();
 
-        mHandler.postDelayed(LongPressFunction, ViewConfiguration.getLongPressTimeout());
+        mHandler.postDelayed(LongPressFunction, 100);
     }
 
     @Override
@@ -129,7 +129,6 @@ public class ChattingService extends Service {
         mImageView = new ImageView(this);
 
         mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
-
         mImageView.setOnTouchListener(mViewTouchListener);
         mHandler = new Handler();
 
