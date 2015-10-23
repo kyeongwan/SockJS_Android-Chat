@@ -3,10 +3,14 @@ package com.lemonlab.sockjschatservice;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -14,7 +18,9 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -22,7 +28,7 @@ import android.widget.TextView;
  * Created by lk on 2015. 10. 23..
  */
 public class ChattingService extends Service {
-    private TextView mPopupView;
+    private ImageView mImageView;
     private WindowManager.LayoutParams mParams;
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
@@ -65,7 +71,7 @@ public class ChattingService extends Service {
                         mParams.y = PREV_Y + y;
 
                         optimizePosition();
-                        mWindowManager.updateViewLayout(mPopupView, mParams);
+                        mWindowManager.updateViewLayout(mImageView, mParams);
                     }
                     break;
                 case MotionEvent.ACTION_UP:
@@ -81,7 +87,9 @@ public class ChattingService extends Service {
     };
 
     private void shortClickEvent() {
-        mPopupView.setText("dsfsadfdsafs");
+        mParams.x = 50;
+        mParams.y = 50;
+        mWindowManager.updateViewLayout(mImageView, mParams);
     }
 
     private void removeLongClickCallback() {
@@ -100,24 +108,29 @@ public class ChattingService extends Service {
     @Override
     public IBinder onBind(Intent arg0) { return null; }
 
+    private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel)
+    {
+        Bitmap srcBitmap = BitmapFactory.decodeResource(getResources(), _srcResId);
+        srcBitmap = Bitmap.createScaledBitmap(srcBitmap, 180, 180, true);
+
+        RoundedBitmapDrawable roundedDrawable =
+                RoundedBitmapDrawableFactory.create(getResources(), srcBitmap);
+
+        roundedDrawable.setCornerRadius( _roundInPixel );
+        roundedDrawable.setAntiAlias(true);
+
+        return roundedDrawable.getBitmap();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mPopupView = new TextView(this);
-        mPopupView.setText("항상 떠있는 액티비티");
-        mPopupView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        mPopupView.setTextColor(Color.BLUE);
-        mPopupView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Log.i("click", "click");
-                return false;
-            }
-        });
-        mPopupView.setBackgroundColor(Color.argb(127, 0, 255, 255));
+        mImageView = new ImageView(this);
 
-        mPopupView.setOnTouchListener(mViewTouchListener);
+        mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+
+        mImageView.setOnTouchListener(mViewTouchListener);
         mHandler = new Handler();
 
         mParams = new WindowManager.LayoutParams(
@@ -129,7 +142,7 @@ public class ChattingService extends Service {
         mParams.gravity = Gravity.LEFT | Gravity.TOP;
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        mWindowManager.addView(mPopupView, mParams);
+        mWindowManager.addView(mImageView, mParams);
 
         addOpacityController();
     }
@@ -138,8 +151,8 @@ public class ChattingService extends Service {
         DisplayMetrics matrix = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getMetrics(matrix);
 
-        MAX_X = matrix.widthPixels - mPopupView.getWidth();
-        MAX_Y = matrix.heightPixels - mPopupView.getHeight();
+        MAX_X = matrix.widthPixels - mImageView.getWidth();
+        MAX_Y = matrix.heightPixels - mImageView.getHeight();
     }
 
     private void optimizePosition() {
@@ -159,7 +172,7 @@ public class ChattingService extends Service {
 
             @Override public void onProgressChanged(SeekBar seekBar, int progress,	boolean fromUser) {
                 mParams.alpha = progress / 100.0f;
-                mWindowManager.updateViewLayout(mPopupView, mParams);
+                mWindowManager.updateViewLayout(mImageView, mParams);
             }
         });
 
@@ -184,7 +197,7 @@ public class ChattingService extends Service {
     @Override
     public void onDestroy() {
         if(mWindowManager != null) {
-            if(mPopupView != null) mWindowManager.removeView(mPopupView);
+            if(mImageView != null) mWindowManager.removeView(mImageView);
             if(mSeekBar != null) mWindowManager.removeView(mSeekBar);
         }
         super.onDestroy();
