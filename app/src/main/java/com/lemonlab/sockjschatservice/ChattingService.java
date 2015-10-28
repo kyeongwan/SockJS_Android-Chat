@@ -1,6 +1,7 @@
 package com.lemonlab.sockjschatservice;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -13,10 +14,14 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -35,7 +40,9 @@ public class ChattingService extends Service {
      */
     private ImageView mImageView;
     private TextView mTextView;
+    private EditText mEditText;
     private WindowManager.LayoutParams mParams;
+    private WindowManager.LayoutParams mParams2;
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
 
@@ -48,8 +55,11 @@ public class ChattingService extends Service {
     private boolean hasLongPress;
     private LongPressClass LongPressFunction;
     private Handler mHandler = null;
-    private final int DEFULT_START_X = 100;
-    private final int DEFULT_START_Y = 100;
+    private final int DEFULT_START_X = 0;
+    private final int DEFULT_START_Y = 0;
+
+    private RelativeLayout chatheadView;
+    private boolean showView;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -59,10 +69,19 @@ public class ChattingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        LayoutInflater inflater = (LayoutInflater)getSystemService(LAYOUT_INFLATER_SERVICE);
+        chatheadView = (RelativeLayout)inflater.inflate(R.layout.chathead, null);
 
         initView();
 
+
+
         mHandler = new Handler();
+
+        mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+
+
 
         mParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -70,58 +89,62 @@ public class ChattingService extends Service {
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
-        mParams.gravity = Gravity.LEFT | Gravity.TOP;
+        mParams.gravity = Gravity.TOP | Gravity.LEFT;
 
-        mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mImageView, mParams);
-        mWindowManager.addView(mTextView, mParams);
 
-        try {
-            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.29:8080/eventbus", "BroadcastNewsfeed") {
-                @Override
-                void parseSockJS(String s) {
-                    try {
-                        s = s.replace("\\\"", "\"");
-                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
 
-                        JSONObject json = new JSONObject(s);
-                        String type = json.getString("type");
-                        String address = json.getString("address");
-                        final String body = json.getString("body");
+        //mWindowManager.addView(et, mParams);
 
-                        if ("to.client.BroadcastNewsfeed".equals(address))
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mTextView.setText(body);
-                                }
-                            });
-
-                        System.out.println(body);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-            boolean b = sockJS.connectBlocking();
-
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            SockJSImpl sockJS = new SockJSImpl("http://192.168.0.5:8080/eventbus", "BroadcastNewsfeed") {
+//                @Override
+//                void parseSockJS(String s) {
+//                    try {
+//                        s = s.replace("\\\"", "\"");
+//                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
+//
+//                        JSONObject json = new JSONObject(s);
+//                        String type = json.getString("type");
+//                        String address = json.getString("address");
+//                        final String body = json.getString("body");
+//
+//                        if ("to.client.BroadcastNewsfeed".equals(address))
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    mTextView.setText(body);
+//                                }
+//                            });
+//
+//                        System.out.println(body);
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            };
+//            boolean b = sockJS.connectBlocking();
+//
+//        } catch (URISyntaxException e) {
+//            e.printStackTrace();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
 
 //        mParams2 = new WindowManager.LayoutParams(
-//                300,
-//                300,
+//                WindowManager.LayoutParams.WRAP_CONTENT,
+//                WindowManager.LayoutParams.WRAP_CONTENT,
 //                WindowManager.LayoutParams.TYPE_PHONE,
-//                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+//                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
 //                PixelFormat.TRANSLUCENT);
+//        mParams2.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
+//
 //        mParams2.gravity = Gravity.LEFT | Gravity.TOP;
 //
 //        mWindowManager.addView(mEditText, mParams2);
 
+//        shortClickEvent();
         //addOpacityController();
     }
 
@@ -183,7 +206,6 @@ public class ChattingService extends Service {
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.LEFT | Gravity.TOP;
 
@@ -282,7 +304,23 @@ public class ChattingService extends Service {
     private void shortClickEvent() {
         mParams.x = DEFULT_START_X;
         mParams.y = DEFULT_START_Y;
-        mWindowManager.updateViewLayout(mImageView, mParams);
+
+        if(!showView){
+            mParams2 = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_PHONE,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    PixelFormat.TRANSLUCENT);
+            chatheadView.setFocusable(false);
+            mWindowManager.addView(chatheadView, mParams2);
+            showView = true;
+        }else{
+            showView = false;
+            mWindowManager.removeView(chatheadView);
+        }
+        mWindowManager.updateViewLayout(mImageView,mParams);
+
     }
 
     private class LongPressClass implements Runnable {
