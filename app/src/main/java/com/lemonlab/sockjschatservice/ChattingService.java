@@ -318,10 +318,10 @@ public class ChattingService extends Service {
 
 
     private void shortClickEvent() {
-        mParams.x = DEFULT_START_X;
-        mParams.y = DEFULT_START_Y;
 
         if(!showView){
+            mParams.x = DEFULT_START_X;
+            mParams.y = DEFULT_START_Y;
             mParams2 = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.MATCH_PARENT,
@@ -331,11 +331,13 @@ public class ChattingService extends Service {
             chatheadView.setFocusable(false);
             mWindowManager.addView(chatheadView, mParams2);
             showView = true;
+            mWindowManager.removeView(mImageView);
+            mWindowManager.addView(mImageView,mParams);
         }else{
             showView = false;
             mWindowManager.removeView(chatheadView);
         }
-        mWindowManager.updateViewLayout(mImageView,mParams);
+
 
     }
 
