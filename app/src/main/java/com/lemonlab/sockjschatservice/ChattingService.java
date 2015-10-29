@@ -47,6 +47,7 @@ public class ChattingService extends Service {
     private EditText mEditText;
     private WindowManager.LayoutParams mParams;
     private WindowManager.LayoutParams mParams2;
+    private WindowManager.LayoutParams mParams3;
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
     private ListView mChatList;
@@ -64,7 +65,7 @@ public class ChattingService extends Service {
     private final int DEFULT_START_Y = 0;
 
     private RelativeLayout chatheadView;
-    private boolean showView;
+    private short showView;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -84,9 +85,6 @@ public class ChattingService extends Service {
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-
-
-
         mParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -94,6 +92,19 @@ public class ChattingService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         mParams.gravity = Gravity.TOP | Gravity.LEFT;
+
+        mParams2 = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT);
+        mParams3  = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
 
         mWindowManager.addView(mImageView, mParams);
 
@@ -222,11 +233,11 @@ public class ChattingService extends Service {
         super.onConfigurationChanged(newConfig);
         Log.i("lotation", "=== onConfigurationChanged is called !!! ===");
 
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView) { // 세로 전환시 발생
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView > 0 ) { // 세로 전환시 발생
             mWindowManager.removeView(chatheadView);
             mWindowManager.addView(chatheadView,mParams2);
             Log.i("lotation", "=== Configuration.ORIENTATION_PORTRAIT !!! ===");
-        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView) { // 가로 전환시 발생
+        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView > 0) { // 가로 전환시 발생
             mWindowManager.removeView(chatheadView);
             mWindowManager.addView(chatheadView,mParams2);
             Log.i("lotation", "=== Configuration.ORIENTATION_LANDSCAPE !!! ===");
@@ -319,23 +330,30 @@ public class ChattingService extends Service {
 
     private void shortClickEvent() {
 
-        if(!showView){
-            mParams.x = DEFULT_START_X;
-            mParams.y = DEFULT_START_Y;
-            mParams2 = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.TYPE_PHONE,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                    PixelFormat.TRANSLUCENT);
-            chatheadView.setFocusable(false);
-            mWindowManager.addView(chatheadView, mParams2);
-            showView = true;
-            mWindowManager.removeView(mImageView);
-            mWindowManager.addView(mImageView,mParams);
-        }else{
-            showView = false;
-            mWindowManager.removeView(chatheadView);
+        switch (showView){
+            case 0:         // If No View
+                mParams.x = DEFULT_START_X;
+                mParams.y = DEFULT_START_Y;
+
+                chatheadView.setFocusable(false);
+                mWindowManager.addView(chatheadView, mParams2);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView,mParams);
+                showView++;
+                break;
+
+            case 1:         // If No Focus View
+                chatheadView.setFocusable(true);
+                mWindowManager.removeView(chatheadView);
+                mWindowManager.addView(chatheadView, mParams3);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView, mParams);
+                showView++;
+                break;
+
+            case 2:
+                mWindowManager.removeView(chatheadView);
+                showView = 0;
         }
 
 
