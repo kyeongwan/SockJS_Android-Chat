@@ -21,6 +21,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -28,7 +29,10 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by lk on 2015. 10. 23..
@@ -45,6 +49,7 @@ public class ChattingService extends Service {
     private WindowManager.LayoutParams mParams2;
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
+    private ListView mChatList;
 
     /**
      * For Floating Button
@@ -73,7 +78,6 @@ public class ChattingService extends Service {
         chatheadView = (RelativeLayout)inflater.inflate(R.layout.chathead, null);
 
         initView();
-
 
 
         mHandler = new Handler();
@@ -153,19 +157,16 @@ public class ChattingService extends Service {
         mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
         mImageView.setOnTouchListener(mViewTouchListener);
 
-//        mEditText = new EditText(this);
-//        mEditText.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                Log.i("Edit Touch", event.getAction() + "");
-//
-//                mInputMethodManager.showSoftInput(mEditText, mInputMethodManager.SHOW_FORCED);
-//                return true;
-//            }
-//        });
+        mChatList = (ListView) chatheadView.findViewById(R.id.chatlist);
+        ArrayList<String> chatdata = new ArrayList<>();
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
 
-        mTextView = new TextView(this);
-        mTextView.setText("가나다라");
+        mChatList.setAdapter(new ChatListAdapter(getApplicationContext(), chatdata));
     }
 
     private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel) {
