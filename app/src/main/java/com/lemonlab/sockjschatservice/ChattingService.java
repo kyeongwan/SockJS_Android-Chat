@@ -212,10 +212,25 @@ public class ChattingService extends Service {
         mWindowManager.addView(mSeekBar, params);
     }
 
-    private void runOnUiThread(Runnable runnable) { mHandler.post(runnable); }
+    private void runOnUiThread(Runnable runnable) {
+        mHandler.post(runnable); }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+
+        super.onConfigurationChanged(newConfig);
+        Log.i("lotation", "=== onConfigurationChanged is called !!! ===");
+
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView) { // 세로 전환시 발생
+            mWindowManager.removeView(chatheadView);
+            mWindowManager.addView(chatheadView,mParams2);
+            Log.i("lotation", "=== Configuration.ORIENTATION_PORTRAIT !!! ===");
+        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView) { // 가로 전환시 발생
+            mWindowManager.removeView(chatheadView);
+            mWindowManager.addView(chatheadView,mParams2);
+            Log.i("lotation", "=== Configuration.ORIENTATION_LANDSCAPE !!! ===");
+        }
+
         setMaxPosition();
         optimizePosition();
     }
@@ -307,8 +322,8 @@ public class ChattingService extends Service {
 
         if(!showView){
             mParams2 = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.TYPE_PHONE,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
@@ -332,4 +347,6 @@ public class ChattingService extends Service {
     }
 
     private boolean LongClickEvent() { return true; }
+
+
 }
