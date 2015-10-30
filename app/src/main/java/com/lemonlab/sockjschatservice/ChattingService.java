@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
@@ -67,6 +68,9 @@ public class ChattingService extends Service {
     private RelativeLayout chatheadView;
     private short showView;
 
+    private ArrayList<String> chatdata;
+    private ChatListAdapter adapter;
+
     @Override
     public IBinder onBind(Intent arg0) {
         return null;
@@ -109,42 +113,43 @@ public class ChattingService extends Service {
         mWindowManager.addView(mImageView, mParams);
 
 
-        //mWindowManager.addView(et, mParams);
+        try {
+            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.158:8080/eventbus", "BroadcastNewsfeed") {
 
-//        try {
-//            SockJSImpl sockJS = new SockJSImpl("http://192.168.0.5:8080/eventbus", "BroadcastNewsfeed") {
-//                @Override
-//                void parseSockJS(String s) {
-//                    try {
-//                        s = s.replace("\\\"", "\"");
-//                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
-//
-//                        JSONObject json = new JSONObject(s);
-//                        String type = json.getString("type");
-//                        String address = json.getString("address");
-//                        final String body = json.getString("body");
-//
-//                        if ("to.client.BroadcastNewsfeed".equals(address))
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    mTextView.setText(body);
-//                                }
-//                            });
-//
-//                        System.out.println(body);
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            };
-//            boolean b = sockJS.connectBlocking();
-//
-//        } catch (URISyntaxException e) {
-//            e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+                @Override
+                void parseSockJS(String s) {
+                    try {
+                        s = s.replace("\\\"", "\"");
+                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
+
+                        JSONObject json = new JSONObject(s);
+                        String type = json.getString("type");
+                        String address = json.getString("address");
+                        final String body = json.getString("body");
+
+                        if ("to.client.BroadcastNewsfeed".equals(address))
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    chatdata.add(body);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            });
+
+                        System.out.println(body);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            boolean b = sockJS.connectBlocking();
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 
 //        mParams2 = new WindowManager.LayoutParams(
@@ -169,15 +174,19 @@ public class ChattingService extends Service {
         mImageView.setOnTouchListener(mViewTouchListener);
 
         mChatList = (ListView) chatheadView.findViewById(R.id.chatlist);
-        ArrayList<String> chatdata = new ArrayList<>();
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        chatdata = new ArrayList<>();
+        adapter = new ChatListAdapter(getApplicationContext(), chatdata);
+        mChatList.setAdapter(adapter);
+        mChatList.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
 
-        mChatList.setAdapter(new ChatListAdapter(getApplicationContext(), chatdata));
+        adapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                mChatList.setSelection(adapter.getCount() - 1);
+            }
+        });
+        adapter.notifyDataSetChanged();
     }
 
     private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel) {
