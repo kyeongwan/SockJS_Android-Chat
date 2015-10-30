@@ -20,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -44,14 +45,14 @@ public class ChattingService extends Service {
      * For ChatHead
      */
     private ImageView mImageView;
-    private TextView mTextView;
-    private EditText mEditText;
     private WindowManager.LayoutParams mParams;
     private WindowManager.LayoutParams mParams2;
     private WindowManager.LayoutParams mParams3;
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
     private ListView mChatList;
+    private Button mChatSend;
+    private EditText mEditText;
 
     /**
      * For Floating Button
@@ -70,6 +71,7 @@ public class ChattingService extends Service {
 
     private ArrayList<String> chatdata;
     private ChatListAdapter adapter;
+    private SockJSImpl sockJS;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -114,13 +116,15 @@ public class ChattingService extends Service {
 
 
         try {
-            SockJSImpl sockJS = new SockJSImpl("http://172.16.101.158:8080/eventbus", "BroadcastNewsfeed") {
+            sockJS = new SockJSImpl("http://172.16.101.158:8080/eventbus", "BroadcastNewsfeed") {
 
                 @Override
                 void parseSockJS(String s) {
                     try {
+                        System.out.println(s);
                         s = s.replace("\\\"", "\"");
                         s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
+
 
                         JSONObject json = new JSONObject(s);
                         String type = json.getString("type");
@@ -187,6 +191,24 @@ public class ChattingService extends Service {
             }
         });
         adapter.notifyDataSetChanged();
+
+        mEditText = (EditText) chatheadView.findViewById(R.id.editText);
+
+        mChatSend = (Button) chatheadView.findViewById(R.id.bt_send);
+        mChatSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONObject obj = new JSONObject();
+                try {
+                    obj.put("type","publish");
+                    obj.put("address", "to.server.RequestNewsfeed");
+                    obj.put("body", mEditText.getText().toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                sockJS.send(obj);
+            }
+        });
     }
 
     private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel) {
