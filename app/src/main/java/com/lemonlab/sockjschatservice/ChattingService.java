@@ -498,21 +498,35 @@ public class ChattingService extends Service implements View.OnClickListener {
 //                break;
 
             case 1:
-                mWindowManager.removeView(bt1);
-                mWindowManager.removeView(bt2);
-                mWindowManager.removeView(bt3);
-                mWindowManager.removeView(bt4);
-                showView = 0;
+                buttonClick();
         }
 
 
     }
 
+    private void buttonClick() {
+        mWindowManager.removeView(bt1);
+        mWindowManager.removeView(bt2);
+        mWindowManager.removeView(bt3);
+        mWindowManager.removeView(bt4);
+        showView = 0;
+    }
+
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == bt1.getId())
-            Toast.makeText(getApplicationContext(), "Setting", Toast.LENGTH_SHORT).show();
+        if (v.getId() == bt1.getId()) {
+            Intent i = new Intent(this,MainActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            buttonClick();
+        }else if(v.getId() == bt2.getId()){
+
+        }else if(v.getId() == bt3.getId()){
+
+        }else if(v.getId() == bt4.getId()){
+
+        }
     }
 
     private class LongPressClass implements Runnable {
