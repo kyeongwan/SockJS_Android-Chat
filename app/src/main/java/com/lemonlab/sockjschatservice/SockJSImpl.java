@@ -43,7 +43,7 @@ public class SockJSImpl extends WebSocketClient {
         }
 
         scheduleHeartbeat();
-        registAddress("to.client."+roomname);
+        registAddress("to.channel.channel_id");
 
     }
 
@@ -80,7 +80,7 @@ public class SockJSImpl extends WebSocketClient {
             String address = json.getString("address");
             String body = json.getString("body");
 
-            if("to.client.BroadcastNewsfeed".equals(address))
+            if("to.channel.channel_id".equals(address))
                 System.out.printf("%s, %s, %s\n", type, address, body);
         } catch (JSONException e) {
             e.printStackTrace();
