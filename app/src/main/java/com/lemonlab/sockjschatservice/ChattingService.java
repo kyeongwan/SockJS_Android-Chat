@@ -1,14 +1,12 @@
 package com.lemonlab.sockjschatservice;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -20,12 +18,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.AnimationUtils;
-import android.view.animation.ScaleAnimation;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -33,16 +25,12 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by lk on 2015. 10. 23..
@@ -234,7 +222,7 @@ public class ChattingService extends Service implements View.OnClickListener {
         mImageView.setOnTouchListener(mViewTouchListener);
 
         bt1 = new ImageButton(this);
-        bt1.setBackground(getDrawable(R.drawable.chaticon));
+        bt1.setBackground(getDrawable(R.drawable.setting));
         bt1.setOnClickListener(this);
 
         bt2 = new ImageButton(this);
@@ -295,37 +283,6 @@ public class ChattingService extends Service implements View.OnClickListener {
         roundedDrawable.setAntiAlias(true);
 
         return roundedDrawable.getBitmap();
-    }
-
-    private void addOpacityController() {
-        mSeekBar = new SeekBar(this);
-        mSeekBar.setMax(100);
-        mSeekBar.setProgress(100);
-        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mParams.alpha = progress / 100.0f;
-                mWindowManager.updateViewLayout(mImageView, mParams);
-            }
-        });
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.LEFT | Gravity.TOP;
-
-        mWindowManager.addView(mSeekBar, params);
     }
 
     private void runOnUiThread(Runnable runnable) {
@@ -516,15 +473,15 @@ public class ChattingService extends Service implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == bt1.getId()) {
-            Intent i = new Intent(this,MainActivity.class);
+            Intent i = new Intent(this, MainActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
             buttonClick();
-        }else if(v.getId() == bt2.getId()){
+        } else if (v.getId() == bt2.getId()) {
 
-        }else if(v.getId() == bt3.getId()){
+        } else if (v.getId() == bt3.getId()) {
 
-        }else if(v.getId() == bt4.getId()){
+        } else if (v.getId() == bt4.getId()) {
 
         }
     }
