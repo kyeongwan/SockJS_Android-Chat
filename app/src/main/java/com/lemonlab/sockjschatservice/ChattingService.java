@@ -8,6 +8,7 @@ import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -27,6 +28,7 @@ import android.view.animation.ScaleAnimation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -44,7 +46,7 @@ import java.util.List;
 /**
  * Created by lk on 2015. 10. 23..
  */
-public class ChattingService extends Service implements Animation.AnimationListener{
+public class ChattingService extends Service implements Animation.AnimationListener {
 
     /**
      * For ChatHead
@@ -66,10 +68,10 @@ public class ChattingService extends Service implements Animation.AnimationListe
     private Button mChatSend;
     private EditText mEditText;
 
-    private ImageView bt1;
-    private ImageView bt2;
-    private ImageView bt3;
-    private ImageView bt4;
+    private ImageButton bt1;
+    private ImageButton bt2;
+    private ImageButton bt3;
+    private ImageButton bt4;
 
     /**
      * For Floating Button
@@ -103,8 +105,8 @@ public class ChattingService extends Service implements Animation.AnimationListe
     @Override
     public void onCreate() {
         super.onCreate();
-        LayoutInflater inflater = (LayoutInflater)getSystemService(LAYOUT_INFLATER_SERVICE);
-        chatheadView = (RelativeLayout)inflater.inflate(R.layout.chathead, null);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        chatheadView = (RelativeLayout) inflater.inflate(R.layout.chathead, null);
 
         initView();
 
@@ -114,24 +116,21 @@ public class ChattingService extends Service implements Animation.AnimationListe
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
         mParamsbt1 = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                150, 150,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         mParamsbt1.gravity = Gravity.TOP | Gravity.LEFT;
 
         mParamsbt2 = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                150, 150,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         mParamsbt2.gravity = Gravity.TOP | Gravity.LEFT;
 
         mParamsbt3 = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                150, 150,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
@@ -146,8 +145,7 @@ public class ChattingService extends Service implements Animation.AnimationListe
         mParams.gravity = Gravity.TOP | Gravity.LEFT;
 
         mParamsbt4 = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                150, 150,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
@@ -159,7 +157,7 @@ public class ChattingService extends Service implements Animation.AnimationListe
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT);
-        mParams3  = new WindowManager.LayoutParams(
+        mParams3 = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
@@ -231,18 +229,19 @@ public class ChattingService extends Service implements Animation.AnimationListe
         mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
         mImageView.setOnTouchListener(mViewTouchListener);
 
-        bt1 = new ImageView(this);
-        bt1.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+        bt1 = new ImageButton(this);
+        //bt1.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+        bt1.setBackground(getDrawable(R.drawable.chaticon));
 
-        bt2 = new ImageView(this);
-        bt2.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+        bt2 = new ImageButton(this);
+        bt2.setBackground(getDrawable(R.drawable.chaticon));
 
-        bt3 = new ImageView(this);
-        bt3.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
+        bt3 = new ImageButton(this);
+        bt3.setBackground(getDrawable(R.drawable.chaticon));
 
-        bt4 = new ImageView(this);
-        bt4.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
-        bt1.setAnimation(AnimationEffect.inFromRightAnimation());
+        bt4 = new ImageButton(this);
+        bt4.setBackground(getDrawable(R.drawable.chaticon));
+
 
         mChatList = (ListView) chatheadView.findViewById(R.id.chatlist);
         chatdata = new ArrayList<>();
@@ -269,13 +268,13 @@ public class ChattingService extends Service implements Animation.AnimationListe
                 try {
                     obj.put("type", "publish");
                     obj.put("address", "to.server.channel");
-                    obj.put("body", "{\"channel_id\" : \"channel_id\",\"msg\" : \""+mEditText.getText().toString()+"\"}");
+                    obj.put("body", "{\"channel_id\" : \"channel_id\",\"msg\" : \"" + mEditText.getText().toString() + "\"}");
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("onClick",e.toString());
+                    Log.e("onClick", e.toString());
                 }
                 sockJS.send(obj);
-                Log.i("fff","send event");
+                Log.i("fff", "send event");
             }
         });
 
@@ -326,7 +325,8 @@ public class ChattingService extends Service implements Animation.AnimationListe
     }
 
     private void runOnUiThread(Runnable runnable) {
-        mHandler.post(runnable); }
+        mHandler.post(runnable);
+    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -334,13 +334,13 @@ public class ChattingService extends Service implements Animation.AnimationListe
         super.onConfigurationChanged(newConfig);
         Log.i("lotation", "=== onConfigurationChanged is called !!! ===");
 
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView > 0 ) { // 세로 전환시 발생
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView > 0) { // 세로 전환시 발생
             mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView,mParams2);
+            mWindowManager.addView(chatheadView, mParams2);
             Log.i("lotation", "=== Configuration.ORIENTATION_PORTRAIT !!! ===");
         } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView > 0) { // 가로 전환시 발생
             mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView,mParams2);
+            mWindowManager.addView(chatheadView, mParams2);
             Log.i("lotation", "=== Configuration.ORIENTATION_LANDSCAPE !!! ===");
         }
 
@@ -432,12 +432,12 @@ public class ChattingService extends Service implements Animation.AnimationListe
     private void shortClickEvent() {
 
         Log.i("XY", mParams.x + "/" + mParams.y);
-        if ( mParams.x <max_X / 2)
-            Log.i("dd","right");
+        if (mParams.x < max_X / 2)
+            Log.i("dd", "right");
         else
-            Log.i("gg:","left");
+            Log.i("gg:", "left");
 
-        switch (showView){
+        switch (showView) {
             case 0:         // If No View
 
                 chatheadView.setFocusable(false);
@@ -464,29 +464,28 @@ public class ChattingService extends Service implements Animation.AnimationListe
                 n1 = new Runnable() {
                     @Override
                     public void run() {
-                        animationR = (int) (0.4054*Math.pow(time1,4)-9.5219*Math.pow(time1,3)+70.57*Math.pow(time1,2)-138.82*time1+80.917);
-                        mParamsbt1.x = (int) (mParams.x + animationR*Math.cos(Math.toRadians(80)));
-                        mParamsbt1.y = (int) (mParams.y + animationR*Math.sin(Math.toRadians(80)));
-                        mParamsbt2.x = (int) (mParams.x + animationR*Math.cos(Math.toRadians(27)));
-                        mParamsbt2.y = (int) (mParams.y + animationR*Math.sin(Math.toRadians(27)));
-                        mParamsbt3.x = (int) (mParams.x + animationR*Math.cos(Math.toRadians(-26)));
-                        mParamsbt3.y = (int) (mParams.y + animationR*Math.sin(Math.toRadians(-26)));
-                        mParamsbt4.x = (int) (mParams.x + animationR*Math.cos(Math.toRadians(-80)));
-                        mParamsbt4.y = (int) (mParams.y + animationR*Math.sin(Math.toRadians(-80)));
-                        time1+=1;
+                        animationR = (int) (0.4054 * Math.pow(time1, 4) - 9.5219 * Math.pow(time1, 3) + 70.57 * Math.pow(time1, 2) - 138.82 * time1 + 80.917);
+                        mParamsbt1.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(80)));
+                        mParamsbt1.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(80)));
+                        mParamsbt2.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(27)));
+                        mParamsbt2.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(27)));
+                        mParamsbt3.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-26)));
+                        mParamsbt3.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-26)));
+                        mParamsbt4.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-80)));
+                        mParamsbt4.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-80)));
+                        time1 += 1;
                         mWindowManager.updateViewLayout(bt1, mParamsbt1);
                         mWindowManager.updateViewLayout(bt2, mParamsbt2);
                         mWindowManager.updateViewLayout(bt3, mParamsbt3);
                         mWindowManager.updateViewLayout(bt4, mParamsbt4);
                         //Log.i("jj", mParamsbt1.x + "x1");
-                        if(time1 < 10)
-                            mHandler.postDelayed(n1,10);
+                        if (time1 < 10)
+                            mHandler.postDelayed(n1, 10);
                         else time1 = 0;
                     }
                 };
 //
-                mHandler.postDelayed(n1,10);
-                
+                mHandler.postDelayed(n1, 10);
                 showView++;
                 break;
 
@@ -496,7 +495,7 @@ public class ChattingService extends Service implements Animation.AnimationListe
                 mWindowManager.addView(chatheadView, mParams3);
                 mWindowManager.removeView(mImageView);
                 mWindowManager.addView(mImageView, mParams);
-               showView++;
+                showView++;
                 break;
 
             case 2:
@@ -514,7 +513,7 @@ public class ChattingService extends Service implements Animation.AnimationListe
 
     @Override
     public void onAnimationEnd(Animation animation) {
-        Log.i("hh2",animation.toString());
+        Log.i("hh2", animation.toString());
     }
 
     @Override
@@ -530,8 +529,9 @@ public class ChattingService extends Service implements Animation.AnimationListe
         }
     }
 
-    private boolean LongClickEvent() { return true; }
-
+    private boolean LongClickEvent() {
+        return true;
+    }
 
 
 }
