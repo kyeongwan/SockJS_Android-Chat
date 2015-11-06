@@ -40,6 +40,7 @@
 
         <LinearLayout
             android:orientation="vertical"
+            android:id="@+id/ll_chathead_chatlist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/linearLayout"
@@ -78,13 +79,5 @@
         </LinearLayout>
 
     </RelativeLayout>
-
-    <Button
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:id="@+id/bt_chathead_close"
-        android:background="@drawable/com_facebook_close"
-        android:layout_marginTop="10dp"
-        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

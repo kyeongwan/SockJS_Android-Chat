@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -77,10 +78,11 @@ public class ChattingService extends Service implements View.OnClickListener {
     Runnable n1;
     double time1;
     int animationR;
+    boolean showButton = false;
 
 
     private RelativeLayout chatheadView;
-    private short showView;
+    private boolean showView = false;
 
     private ArrayList<String> chatdata;
     private ChatListAdapter adapter;
@@ -145,22 +147,6 @@ public class ChattingService extends Service implements View.OnClickListener {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
-//        mParams2 = new WindowManager.LayoutParams(
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.TYPE_PHONE,
-//                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
-//                PixelFormat.TRANSLUCENT);
-//        mParams2.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
-//
-//        mParams2.gravity = Gravity.LEFT | Gravity.TOP;
-//
-//        mWindowManager.addView(mEditText, mParams2);
-
-//        shortClickEvent();
-        //addOpacityController();
     }
 
     private void initParams() {
@@ -206,7 +192,8 @@ public class ChattingService extends Service implements View.OnClickListener {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT);
         mParams2.alpha = 90;
         mParams3 = new WindowManager.LayoutParams(
@@ -239,6 +226,7 @@ public class ChattingService extends Service implements View.OnClickListener {
         bt4.setOnClickListener(this);
 
         mChatList = (ListView) chatheadView.findViewById(R.id.lv_chathead_chatlist);
+
         chatdata = new ArrayList<>();
         adapter = new ChatListAdapter(getApplicationContext(), chatdata);
         mChatList.setAdapter(adapter);
@@ -292,26 +280,6 @@ public class ChattingService extends Service implements View.OnClickListener {
         mHandler.post(runnable);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-
-        super.onConfigurationChanged(newConfig);
-        Log.i("lotation", "=== onConfigurationChanged is called !!! ===");
-
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView > 0) { // 세로 전환시 발생
-            mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView, mParams2);
-            Log.i("lotation", "=== Configuration.ORIENTATION_PORTRAIT !!! ===");
-        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView > 0) { // 가로 전환시 발생
-            mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView, mParams2);
-            Log.i("lotation", "=== Configuration.ORIENTATION_LANDSCAPE !!! ===");
-        }
-
-        setMaxPosition();
-        optimizePosition();
-    }
-
     private void setMaxPosition() {
         DisplayMetrics matrix = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getMetrics(matrix);
@@ -342,6 +310,7 @@ public class ChattingService extends Service implements View.OnClickListener {
         public boolean onTouch(View v, MotionEvent event) {
 
             Log.i("touch Event", event.getAction() + "");
+
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     if (max_X == -1)
@@ -355,7 +324,7 @@ public class ChattingService extends Service implements View.OnClickListener {
                     CheckLongClick();
                     break;
                 case MotionEvent.ACTION_MOVE:
-
+                    buttonClick();
                     if (hasLongPress) {
                         int x = (int) (event.getRawX() - start_X);
                         int y = (int) (event.getRawY() - start_Y);
@@ -395,58 +364,59 @@ public class ChattingService extends Service implements View.OnClickListener {
 
     private void shortClickEvent() {
 
-        Log.i("XY", mParams.x + "/" + mParams.y);
+        Log.i("XY", mParams.x + "/" + mParams.y + "/" + showView);
         if (mParams.x < max_X / 2)
             Log.i("dd", "right");
         else
             Log.i("gg:", "left");
-
-        switch (showView) {
-            case 0:         // If No View
-                mParamsbt1.x = mParams.x;
-                mParamsbt2.x = mParams.x;
-                mParamsbt3.x = mParams.x;
-                mParamsbt4.x = mParams.x;
-                mParamsbt1.y = mParams.y;
-                mParamsbt2.y = mParams.y;
-                mParamsbt3.y = mParams.y;
-                mParamsbt4.y = mParams.y;
+        if (!showView) {
+            mParamsbt1.x = mParams.x;
+            mParamsbt2.x = mParams.x;
+            mParamsbt3.x = mParams.x;
+            mParamsbt4.x = mParams.x;
+            mParamsbt1.y = mParams.y;
+            mParamsbt2.y = mParams.y;
+            mParamsbt3.y = mParams.y;
+            mParamsbt4.y = mParams.y;
 //                chatheadView.setFocusable(false);
 //                mWindowManager.addView(chatheadView, mParams2);
 //                mWindowManager.removeView(mImageView);
 //                mWindowManager.addView(mImageView, mParams);
-                mWindowManager.addView(bt1, mParamsbt1);
-                mWindowManager.addView(bt2, mParamsbt2);
-                mWindowManager.addView(bt3, mParamsbt3);
-                mWindowManager.addView(bt4, mParamsbt4);
+            mWindowManager.addView(bt1, mParamsbt1);
+            mWindowManager.addView(bt2, mParamsbt2);
+            mWindowManager.addView(bt3, mParamsbt3);
+            mWindowManager.addView(bt4, mParamsbt4);
 
-                n1 = new Runnable() {
-                    @Override
-                    public void run() {
-                        animationR = (int) (0.264 * Math.pow(time1, 4) - 7.277 * Math.pow(time1, 3) + 64.646 * Math.pow(time1, 2) - 167.18 * time1 + 116.33);
-                        mParamsbt1.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(80)));
-                        mParamsbt1.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(80)));
-                        mParamsbt2.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(27)));
-                        mParamsbt2.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(27)));
-                        mParamsbt3.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-26)));
-                        mParamsbt3.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-26)));
-                        mParamsbt4.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-80)));
-                        mParamsbt4.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-80)));
-                        time1 += 1;
-                        mWindowManager.updateViewLayout(bt1, mParamsbt1);
-                        mWindowManager.updateViewLayout(bt2, mParamsbt2);
-                        mWindowManager.updateViewLayout(bt3, mParamsbt3);
-                        mWindowManager.updateViewLayout(bt4, mParamsbt4);
-                        //Log.i("jj", mParamsbt1.x + "x1");
-                        if (time1 < 11)
-                            mHandler.postDelayed(n1, 30);
-                        else time1 = 0;
-                    }
-                };
+            showButton = true;
+            showView = true;
+
+            n1 = new Runnable() {
+                @Override
+                public void run() {
+                    animationR = (int) (0.264 * Math.pow(time1, 4) - 7.277 * Math.pow(time1, 3) + 64.646 * Math.pow(time1, 2) - 167.18 * time1 + 116.33);
+                    mParamsbt1.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(80)));
+                    mParamsbt1.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(80)));
+                    mParamsbt2.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(27)));
+                    mParamsbt2.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(27)));
+                    mParamsbt3.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-26)));
+                    mParamsbt3.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-26)));
+                    mParamsbt4.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-80)));
+                    mParamsbt4.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-80)));
+                    time1 += 1;
+                    mWindowManager.updateViewLayout(bt1, mParamsbt1);
+                    mWindowManager.updateViewLayout(bt2, mParamsbt2);
+                    mWindowManager.updateViewLayout(bt3, mParamsbt3);
+                    mWindowManager.updateViewLayout(bt4, mParamsbt4);
+                    //Log.i("jj", mParamsbt1.x + "x1");
+                    if (time1 < 11)
+                        mHandler.postDelayed(n1, 30);
+                    else time1 = 0;
+                }
+            };
 //
-                mHandler.postDelayed(n1, 30);
-                showView++;
-                break;
+            mHandler.postDelayed(n1, 30);
+
+        }else {
 //
 //            case 1:         // If No Focus View
 //                chatheadView.setFocusable(true);
@@ -456,20 +426,21 @@ public class ChattingService extends Service implements View.OnClickListener {
 //                mWindowManager.addView(mImageView, mParams);
 //                showView++;
 //                break;
-
-            case 1:
-                buttonClick();
-        }
-
-
+        buttonClick();
     }
 
+
+}
+
     private void buttonClick() {
-        mWindowManager.removeView(bt1);
-        mWindowManager.removeView(bt2);
-        mWindowManager.removeView(bt3);
-        mWindowManager.removeView(bt4);
-        showView = 0;
+        if (showButton || showView) {
+            mWindowManager.removeView(bt1);
+            mWindowManager.removeView(bt2);
+            mWindowManager.removeView(bt3);
+            mWindowManager.removeView(bt4);
+        }
+        showView = false;
+        showButton = false;
     }
 
 
@@ -490,13 +461,14 @@ public class ChattingService extends Service implements View.OnClickListener {
         }
     }
 
-    private class LongPressClass implements Runnable {
-        @Override
-        public void run() {
-            if (LongClickEvent())
-                hasLongPress = true;
-        }
+private class LongPressClass implements Runnable {
+    @Override
+    public void run() {
+        if (LongClickEvent())
+            hasLongPress = true;
     }
+
+}
 
     private boolean LongClickEvent() {
         return true;
