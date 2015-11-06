@@ -208,6 +208,7 @@ public class ChattingService extends Service implements View.OnClickListener {
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT);
+        mParams2.alpha = 90;
         mParams3 = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -227,15 +228,17 @@ public class ChattingService extends Service implements View.OnClickListener {
 
         bt2 = new ImageButton(this);
         bt2.setBackground(getDrawable(R.drawable.chaticon));
+        bt2.setOnClickListener(this);
 
         bt3 = new ImageButton(this);
         bt3.setBackground(getDrawable(R.drawable.chaticon));
+        bt3.setOnClickListener(this);
 
         bt4 = new ImageButton(this);
         bt4.setBackground(getDrawable(R.drawable.chaticon));
+        bt4.setOnClickListener(this);
 
-
-        mChatList = (ListView) chatheadView.findViewById(R.id.chatlist);
+        mChatList = (ListView) chatheadView.findViewById(R.id.lv_chathead_chatlist);
         chatdata = new ArrayList<>();
         adapter = new ChatListAdapter(getApplicationContext(), chatdata);
         mChatList.setAdapter(adapter);
@@ -250,25 +253,25 @@ public class ChattingService extends Service implements View.OnClickListener {
         });
         adapter.notifyDataSetChanged();
 
-        mEditText = (EditText) chatheadView.findViewById(R.id.editText);
+        mEditText = (EditText) chatheadView.findViewById(R.id.et_chathead_chat);
 
-        mChatSend = (Button) chatheadView.findViewById(R.id.bt_send);
-        mChatSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                JSONObject obj = new JSONObject();
-                try {
-                    obj.put("type", "publish");
-                    obj.put("address", "to.server.channel");
-                    obj.put("body", "{\"channel_id\" : \"channel_id\",\"msg\" : \"" + mEditText.getText().toString() + "\"}");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Log.e("onClick", e.toString());
-                }
-                sockJS.send(obj);
-                Log.i("fff", "send event");
-            }
-        });
+//        mChatSend = (Button) chatheadView.findViewById(R.id.bt_send);
+//        mChatSend.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                JSONObject obj = new JSONObject();
+//                try {
+//                    obj.put("type", "publish");
+//                    obj.put("address", "to.server.channel");
+//                    obj.put("body", "{\"channel_id\" : \"channel_id\",\"msg\" : \"" + mEditText.getText().toString() + "\"}");
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                    Log.e("onClick", e.toString());
+//                }
+//                sockJS.send(obj);
+//                Log.i("fff", "send event");
+//            }
+//        });
 
     }
 
@@ -472,17 +475,18 @@ public class ChattingService extends Service implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == bt1.getId()) {
+        if (v.getBackground() == bt1.getBackground()) {
             Intent i = new Intent(this, MainActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
             buttonClick();
-        } else if (v.getId() == bt2.getId()) {
+        } else if (v.getBackground() == bt2.getBackground()) {
 
-        } else if (v.getId() == bt3.getId()) {
+        } else if (v.getBackground() == bt3.getBackground()) {
 
-        } else if (v.getId() == bt4.getId()) {
-
+        } else if (v.getBackground() == bt4.getBackground()) {
+            buttonClick();
+            mWindowManager.addView(chatheadView, mParams2);
         }
     }
 

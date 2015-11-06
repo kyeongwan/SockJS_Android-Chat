@@ -9,28 +9,33 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#66000000"
+        android:background="@drawable/chat"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:layout_alignParentTop="true">
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentTop="true"
+        android:id="@+id/relativeLayout">
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/linearLayout">
+            android:padding="10dp"
+            android:id="@+id/linearLayout"
+            android:gravity="center">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="세로화면"
+                android:text="몬스터 길들이기"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="#ffff00"
                 android:id="@+id/textView2" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New Text"
-                android:id="@+id/textView3" />
         </LinearLayout>
 
         <LinearLayout
@@ -44,35 +49,42 @@
             <ListView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:id="@+id/chatlist" />
+                android:id="@+id/lv_chathead_chatlist" />
         </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentStart="true"
+            android:paddingBottom="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
             android:id="@+id/linearLayout2">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New Text"
-                android:id="@+id/textView6" />
+            <Button
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="Color"
+                android:id="@+id/bt_chathead_color" />
 
             <EditText
-                android:layout_width="256dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/editText" />
+                android:id="@+id/et_chathead_chat"
+                android:background="@android:drawable/editbox_background_normal" />
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send"
-                android:id="@+id/bt_send" />
         </LinearLayout>
 
     </RelativeLayout>
+
+    <Button
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:id="@+id/bt_chathead_close"
+        android:background="@drawable/com_facebook_close"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>
