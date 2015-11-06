@@ -83,6 +83,7 @@ public class ChattingService extends Service implements View.OnClickListener {
 
     private RelativeLayout chatheadView;
     private boolean showView = false;
+    private short showchat = 0;
 
     private ArrayList<String> chatdata;
     private ChatListAdapter adapter;
@@ -242,7 +243,7 @@ public class ChattingService extends Service implements View.OnClickListener {
         adapter.notifyDataSetChanged();
 
         mEditText = (EditText) chatheadView.findViewById(R.id.et_chathead_chat);
-
+        mEditText.setOnKeyListener(new SendEvent());
 //        mChatSend = (Button) chatheadView.findViewById(R.id.bt_send);
 //        mChatSend.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -457,7 +458,35 @@ public class ChattingService extends Service implements View.OnClickListener {
 
         } else if (v.getBackground() == bt4.getBackground()) {
             buttonClick();
-            mWindowManager.addView(chatheadView, mParams2);
+            if(showchat == 0) {
+                mWindowManager.addView(chatheadView, mParams2);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView, mParams);
+                showchat++;
+            }else if(showchat == 1){
+                mParams2 = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                        WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                        PixelFormat.TRANSLUCENT);
+                mParams2.alpha=90;
+                mWindowManager.updateViewLayout(chatheadView,mParams2);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView, mParams);
+                showchat++;
+            }else {
+                mWindowManager.removeView(chatheadView);
+                mParams2 = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                        PixelFormat.TRANSLUCENT);
+                mParams2.alpha=90;
+                showchat = 0;
+            }
         }
     }
 
