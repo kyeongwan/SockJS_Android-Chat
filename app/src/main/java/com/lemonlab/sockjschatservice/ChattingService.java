@@ -1,9 +1,9 @@
 package com.lemonlab.sockjschatservice;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
@@ -14,42 +14,55 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by lk on 2015. 10. 23..
  */
-public class ChattingService extends Service {
+public class ChattingService extends Service implements View.OnClickListener {
 
     /**
      * For ChatHead
      */
     private ImageView mImageView;
-    private TextView mTextView;
-    private EditText mEditText;
     private WindowManager.LayoutParams mParams;
     private WindowManager.LayoutParams mParams2;
+    private WindowManager.LayoutParams mParams3;
+
+
+    private WindowManager.LayoutParams mParamsbt1;
+    private WindowManager.LayoutParams mParamsbt2;
+    private WindowManager.LayoutParams mParamsbt3;
+    private WindowManager.LayoutParams mParamsbt4;
+
     private WindowManager mWindowManager;
     private SeekBar mSeekBar;
     private ListView mChatList;
+    private Button mChatSend;
+    private EditText mEditText;
+
+    private ImageButton bt1;
+    private ImageButton bt2;
+    private ImageButton bt3;
+    private ImageButton bt4;
 
     /**
      * For Floating Button
@@ -63,8 +76,19 @@ public class ChattingService extends Service {
     private final int DEFULT_START_X = 0;
     private final int DEFULT_START_Y = 0;
 
+    Runnable n1;
+    double time1;
+    int animationR;
+    boolean showButton = false;
+
+
     private RelativeLayout chatheadView;
-    private boolean showView;
+    private boolean showView = false;
+    private short showchat = 0;
+
+    private ArrayList<String> chatdata;
+    private ChatListAdapter adapter;
+    private SockJSImpl sockJS;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -74,18 +98,89 @@ public class ChattingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        LayoutInflater inflater = (LayoutInflater)getSystemService(LAYOUT_INFLATER_SERVICE);
-        chatheadView = (RelativeLayout)inflater.inflate(R.layout.chathead, null);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        chatheadView = (RelativeLayout) inflater.inflate(R.layout.chathead, null);
 
         initView();
-
+        initParams();
 
         mHandler = new Handler();
 
+
+        mWindowManager.addView(mImageView, mParams);
+
+
+        try {
+            sockJS = new SockJSImpl("http://133.130.113.101:7030/eventbus", "channel_id") {
+
+                @Override
+                void parseSockJS(String s) {
+                    try {
+                        //System.out.println(s);
+                        s = s.replace("\\\"", "\"");
+                        s = s.replace("\\\\", "\\");
+//                        s = s.replace("\\\\\"", "\"");
+                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
+                        Log.i("Reci", s);
+
+                        JSONObject json = new JSONObject(s);
+                        String type = json.getString("type");
+                        String address = json.getString("address");
+//                        final JSONObject body = json.getJSONObject("body");
+                        final JSONObject body = new JSONObject(json.getString("body"));
+                        String bodyType = body.getString("type");
+                        String msg = body.getString("msg");
+                        String nickname = body.getString("sender_nick");
+
+                        final String data =  bodyType + "/&" +nickname + "/&" + msg;
+                        if ("to.channel.channel_id".equals(address))
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    chatdata.add(data);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            });
+
+                        System.out.println("body = " + body);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            boolean b = sockJS.connectBlocking();
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initParams() {
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
+        mParamsbt1 = new WindowManager.LayoutParams(
+                150, 150,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        mParamsbt1.gravity = Gravity.TOP | Gravity.LEFT;
 
+        mParamsbt2 = new WindowManager.LayoutParams(
+                150, 150,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        mParamsbt2.gravity = Gravity.TOP | Gravity.LEFT;
 
+        mParamsbt3 = new WindowManager.LayoutParams(
+                150, 150,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        mParamsbt3.gravity = Gravity.TOP | Gravity.LEFT;
 
         mParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -95,61 +190,27 @@ public class ChattingService extends Service {
                 PixelFormat.TRANSLUCENT);
         mParams.gravity = Gravity.TOP | Gravity.LEFT;
 
-        mWindowManager.addView(mImageView, mParams);
+        mParamsbt4 = new WindowManager.LayoutParams(
+                150, 150,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        mParamsbt4.gravity = Gravity.TOP | Gravity.LEFT;
 
-
-        //mWindowManager.addView(et, mParams);
-
-//        try {
-//            SockJSImpl sockJS = new SockJSImpl("http://192.168.0.5:8080/eventbus", "BroadcastNewsfeed") {
-//                @Override
-//                void parseSockJS(String s) {
-//                    try {
-//                        s = s.replace("\\\"", "\"");
-//                        s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
-//
-//                        JSONObject json = new JSONObject(s);
-//                        String type = json.getString("type");
-//                        String address = json.getString("address");
-//                        final String body = json.getString("body");
-//
-//                        if ("to.client.BroadcastNewsfeed".equals(address))
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    mTextView.setText(body);
-//                                }
-//                            });
-//
-//                        System.out.println(body);
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            };
-//            boolean b = sockJS.connectBlocking();
-//
-//        } catch (URISyntaxException e) {
-//            e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
-
-//        mParams2 = new WindowManager.LayoutParams(
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.TYPE_PHONE,
-//                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
-//                PixelFormat.TRANSLUCENT);
-//        mParams2.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
-//
-//        mParams2.gravity = Gravity.LEFT | Gravity.TOP;
-//
-//        mWindowManager.addView(mEditText, mParams2);
-
-//        shortClickEvent();
-        //addOpacityController();
+        mParams2 = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT);
+        mParams2.alpha = 90;
+        mParams3 = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
     }
 
     private void initView() {
@@ -157,16 +218,79 @@ public class ChattingService extends Service {
         mImageView.setImageBitmap(getMaskedBitmap(R.drawable.chaticon, 30));
         mImageView.setOnTouchListener(mViewTouchListener);
 
-        mChatList = (ListView) chatheadView.findViewById(R.id.chatlist);
-        ArrayList<String> chatdata = new ArrayList<>();
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
-        chatdata.add("ㅁㅁㅁㅁㅁㅁ");
+        bt1 = new ImageButton(this);
+        bt1.setBackground(getResources().getDrawable(R.drawable.setting));
+        bt1.setOnClickListener(this);
 
-        mChatList.setAdapter(new ChatListAdapter(getApplicationContext(), chatdata));
+        bt2 = new ImageButton(this);
+        bt2.setBackground(getResources().getDrawable(R.drawable.chaticon));
+        bt2.setOnClickListener(this);
+
+        bt3 = new ImageButton(this);
+        bt3.setBackground(getResources().getDrawable(R.drawable.chaticon));
+        bt3.setOnClickListener(this);
+
+        bt4 = new ImageButton(this);
+        bt4.setBackground(getResources().getDrawable(R.drawable.chaticon));
+        bt4.setOnClickListener(this);
+
+        mChatList = (ListView) chatheadView.findViewById(R.id.lv_chathead_chatlist);
+
+        chatdata = new ArrayList<>();
+        adapter = new ChatListAdapter(getApplicationContext(), chatdata);
+        mChatList.setAdapter(adapter);
+        mChatList.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+
+        adapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                mChatList.setSelection(adapter.getCount() - 1);
+            }
+        });
+        adapter.notifyDataSetChanged();
+
+        mEditText = (EditText) chatheadView.findViewById(R.id.et_chathead_chat);
+        mEditText.setOnKeyListener(new View.OnKeyListener() {
+                                       @Override
+                                       public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                                           if (event.getAction()!=KeyEvent.ACTION_DOWN)
+                                               return true;
+
+
+                                           if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                                               Log.d("Send", "KeyEvent.KEYCODE_ENTER");
+                                               JSONObject obj = new JSONObject();
+                                               try {
+                                                   obj.put("type", "publish");
+                                                   obj.put("address", "to.server.channel");
+                                                   JSONObject body = new JSONObject();
+                                                   body.put("type", "notice");
+                                                   body.put("channel_id", "channel_id");
+                                                   body.put("sender_id", "aaa");
+                                                   body.put("sender_nick", "닉넴");
+                                                   body.put("app_id", "com.aaa.aaa");
+                                                   body.put("msg", mEditText.getText().toString());
+                                                   obj.put("body", body);
+                                               } catch (JSONException e) {
+                                                   e.printStackTrace();
+                                                   Log.e("onClick", e.toString());
+                                               }
+                                               if("".equals(mEditText.getText().toString()))
+                                                   return true;
+                                               sockJS.send(obj);
+                                               Log.i("fff", "send event");
+                                               mEditText.setText("");
+                                               return true;
+                                           }
+
+                                           return false;
+                                       }
+                                   }
+
+        );
+
     }
 
     private Bitmap getMaskedBitmap(int _srcResId, float _roundInPixel) {
@@ -182,58 +306,8 @@ public class ChattingService extends Service {
         return roundedDrawable.getBitmap();
     }
 
-    private void addOpacityController() {
-        mSeekBar = new SeekBar(this);
-        mSeekBar.setMax(100);
-        mSeekBar.setProgress(100);
-        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mParams.alpha = progress / 100.0f;
-                mWindowManager.updateViewLayout(mImageView, mParams);
-            }
-        });
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.LEFT | Gravity.TOP;
-
-        mWindowManager.addView(mSeekBar, params);
-    }
-
     private void runOnUiThread(Runnable runnable) {
-        mHandler.post(runnable); }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-
-        super.onConfigurationChanged(newConfig);
-        Log.i("lotation", "=== onConfigurationChanged is called !!! ===");
-
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && showView) { // 세로 전환시 발생
-            mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView,mParams2);
-            Log.i("lotation", "=== Configuration.ORIENTATION_PORTRAIT !!! ===");
-        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && showView) { // 가로 전환시 발생
-            mWindowManager.removeView(chatheadView);
-            mWindowManager.addView(chatheadView,mParams2);
-            Log.i("lotation", "=== Configuration.ORIENTATION_LANDSCAPE !!! ===");
-        }
-
-        setMaxPosition();
-        optimizePosition();
+        mHandler.post(runnable);
     }
 
     private void setMaxPosition() {
@@ -266,6 +340,7 @@ public class ChattingService extends Service {
         public boolean onTouch(View v, MotionEvent event) {
 
             Log.i("touch Event", event.getAction() + "");
+
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     if (max_X == -1)
@@ -279,7 +354,7 @@ public class ChattingService extends Service {
                     CheckLongClick();
                     break;
                 case MotionEvent.ACTION_MOVE:
-
+                    buttonClick();
                     if (hasLongPress) {
                         int x = (int) (event.getRawX() - start_X);
                         int y = (int) (event.getRawY() - start_Y);
@@ -319,26 +394,116 @@ public class ChattingService extends Service {
 
     private void shortClickEvent() {
 
-        if(!showView){
-            mParams.x = DEFULT_START_X;
-            mParams.y = DEFULT_START_Y;
-            mParams2 = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.TYPE_PHONE,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                    PixelFormat.TRANSLUCENT);
-            chatheadView.setFocusable(false);
-            mWindowManager.addView(chatheadView, mParams2);
+        Log.i("XY", mParams.x + "/" + mParams.y + "/" + showView);
+        if (mParams.x < max_X / 2)
+            Log.i("dd", "right");
+        else
+            Log.i("gg:", "left");
+        if (!showView) {
+            mParamsbt1.x = mParams.x;
+            mParamsbt2.x = mParams.x;
+            mParamsbt3.x = mParams.x;
+            mParamsbt4.x = mParams.x;
+            mParamsbt1.y = mParams.y;
+            mParamsbt2.y = mParams.y;
+            mParamsbt3.y = mParams.y;
+            mParamsbt4.y = mParams.y;
+            mWindowManager.addView(bt1, mParamsbt1);
+            mWindowManager.addView(bt2, mParamsbt2);
+            mWindowManager.addView(bt3, mParamsbt3);
+            mWindowManager.addView(bt4, mParamsbt4);
+
+            showButton = true;
             showView = true;
-            mWindowManager.removeView(mImageView);
-            mWindowManager.addView(mImageView,mParams);
-        }else{
-            showView = false;
-            mWindowManager.removeView(chatheadView);
+
+            n1 = new Runnable() {
+                @Override
+                public void run() {
+                    animationR = (int) (0.264 * Math.pow(time1, 4) - 7.277 * Math.pow(time1, 3) + 64.646 * Math.pow(time1, 2) - 167.18 * time1 + 116.33);
+                    mParamsbt1.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(80)));
+                    mParamsbt1.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(80)));
+                    mParamsbt2.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(27)));
+                    mParamsbt2.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(27)));
+                    mParamsbt3.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-26)));
+                    mParamsbt3.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-26)));
+                    mParamsbt4.x = (int) (mParams.x + (mImageView.getWidth() / 2) + animationR * Math.cos(Math.toRadians(-80)));
+                    mParamsbt4.y = (int) (mParams.y + animationR * Math.sin(Math.toRadians(-80)));
+                    time1 += 1;
+                    mWindowManager.updateViewLayout(bt1, mParamsbt1);
+                    mWindowManager.updateViewLayout(bt2, mParamsbt2);
+                    mWindowManager.updateViewLayout(bt3, mParamsbt3);
+                    mWindowManager.updateViewLayout(bt4, mParamsbt4);
+                    //Log.i("jj", mParamsbt1.x + "x1");
+                    if (time1 < 11)
+                        mHandler.postDelayed(n1, 30);
+                    else time1 = 0;
+                }
+            };
+//
+            mHandler.postDelayed(n1, 30);
+
+        } else {
+            buttonClick();
         }
 
 
+    }
+
+    private void buttonClick() {
+        if (showButton || showView) {
+            mWindowManager.removeView(bt1);
+            mWindowManager.removeView(bt2);
+            mWindowManager.removeView(bt3);
+            mWindowManager.removeView(bt4);
+        }
+        showView = false;
+        showButton = false;
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        if (v.getBackground() == bt1.getBackground()) {
+            Intent i = new Intent(this, MainActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            buttonClick();
+        } else if (v.getBackground() == bt2.getBackground()) {
+
+        } else if (v.getBackground() == bt3.getBackground()) {
+
+        } else if (v.getBackground() == bt4.getBackground()) {
+            buttonClick();
+            if (showchat == 0) {
+                mWindowManager.addView(chatheadView, mParams2);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView, mParams);
+                showchat++;
+            } else if (showchat == 1) {
+                mParams2 = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                        WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                        PixelFormat.TRANSLUCENT);
+                mParams2.alpha = 90;
+                mWindowManager.updateViewLayout(chatheadView, mParams2);
+                mWindowManager.removeView(mImageView);
+                mWindowManager.addView(mImageView, mParams);
+                showchat++;
+            } else {
+                mWindowManager.removeView(chatheadView);
+                mParams2 = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                        PixelFormat.TRANSLUCENT);
+                mParams2.alpha = 90;
+                showchat = 0;
+            }
+        }
     }
 
     private class LongPressClass implements Runnable {
@@ -347,9 +512,12 @@ public class ChattingService extends Service {
             if (LongClickEvent())
                 hasLongPress = true;
         }
+
     }
 
-    private boolean LongClickEvent() { return true; }
+    private boolean LongClickEvent() {
+        return true;
+    }
 
 
 }
