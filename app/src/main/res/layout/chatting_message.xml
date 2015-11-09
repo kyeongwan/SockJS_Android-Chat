@@ -8,6 +8,7 @@
         android:layout_height="wrap_content"
         android:text="New Text"
         android:id="@+id/chatdata"
+        android:layout_marginLeft="12dp"
         android:textSize="14sp"
         android:layout_gravity="center_horizontal" />
 </LinearLayout>
