@@ -43,7 +43,7 @@ public class SockJSImpl extends WebSocketClient {
         }
 
         scheduleHeartbeat();
-        registAddress("to.channel.channel_id");
+        registAddress("to.channel."+roomname);
 
     }
 
@@ -72,7 +72,9 @@ public class SockJSImpl extends WebSocketClient {
 
     void parseSockJS(String s) {
         try {
+
             s = s.replace("\\\"", "\"");
+            s = s.replace("\\\\\"", "\"");
             s = s.substring(3, s.length() - 2); // a[" ~ "] 없애기
 
             JSONObject json = new JSONObject(s);

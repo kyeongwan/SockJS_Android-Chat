@@ -1,6 +1,11 @@
 package com.lemonlab.sockjschatservice;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,7 +51,20 @@ public class ChatListAdapter extends BaseAdapter {
             row = inflater.inflate(R.layout.chatting_message, parent, false);
         }
         TextView textView = (TextView)row.findViewById(R.id.chatdata);
-        textView.setText(chatData.get(position));
+        String[] data = chatData.get(position).split("/&");
+        SpannableStringBuilder sp = null;
+        if("normal".equals(data[0])) {
+            sp = new SpannableStringBuilder(data[1] + " : " + data[2]);
+            sp.setSpan(new ForegroundColorSpan(Color.parseColor("#FF0000")), 0, data[1].length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            textView.setText(sp);
+        }else if("notice".equals(data[0])){
+            sp = new SpannableStringBuilder(data[1] + " : " + data[2]);
+            sp.setSpan(new ForegroundColorSpan(Color.parseColor("#FF00FF")), 0, sp.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            textView.setTypeface(null, Typeface.BOLD);
+            textView.setText(sp);
+        }else{
+            textView.setText("ERROR");
+        }
         return row;
     }
 }
